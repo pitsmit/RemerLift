@@ -17,7 +17,8 @@ class Command {
   core::FloorNum floor;
 
 public:
-  Command(const std::string &input) {
+  Command(const std::string &input) { // Команда должна начинаться с 'F' или
+                                      // 'C', за которым следует номер этажа
     if (input.size() < MIN_COMMAND_LENGTH ||
         (input[0] != FLOOR_COMMAND_PREFIX &&
          input[0] != CABIN_COMMAND_PREFIX)) {

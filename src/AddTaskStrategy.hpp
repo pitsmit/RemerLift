@@ -3,6 +3,8 @@
 #include "Command.hpp"
 #include "Lift.hpp"
 
+// различные стратегии добавления задачи в список задач лифта в зависимости от
+// состояния лифта и команды
 class AddTaskStrategy {
 protected:
   Lift &lift;
@@ -18,6 +20,7 @@ public:
   virtual void add_task() = 0;
 };
 
+/*ЛифтБезЗадач_НоваяЦельНаходитсяВышеТекущегоПоложения*/
 class LiftHasNoTasks_Higher_Strategy : public AddTaskStrategy {
 public:
   using AddTaskStrategy::AddTaskStrategy;
@@ -33,6 +36,7 @@ public:
   }
 };
 
+/*ЛифтБезЗадач_НоваяЦельНаходитсяНижеТекущегоПоложения*/
 class LiftHasNoTasks_Lower_Strategy : public AddTaskStrategy {
 public:
   using AddTaskStrategy::AddTaskStrategy;
@@ -48,6 +52,7 @@ public:
   }
 };
 
+/*ЛифтБезЗадач_НоваяЦельНаходитсяНаТекущемЭтаже*/
 class LiftHasNoTasks_Current_Strategy : public AddTaskStrategy {
 public:
   using AddTaskStrategy::AddTaskStrategy;
@@ -72,6 +77,7 @@ public:
   void add_task() override { lift.stopping_message(); }
 };
 
+/*ЛифтЕдетВверх_НоваяЦельНаходитсяВышеТекущегоПоложения_КнопкаНажатаВКабине*/
 class LiftGoesUp_Higher_Cabin_Strategy : public AddTaskStrategy {
 public:
   using AddTaskStrategy::AddTaskStrategy;
@@ -98,6 +104,7 @@ public:
   void add_task() override { lift.add_to_tasks_lower(command.get_floor()); }
 };
 
+/*ЛифтЕдетВверх_НоваяЦельНаходитсяВышеВерхнейЦелиЛифта_КнопкаНажатаНаЭтаже*/
 class LiftGoesUp_HigherTopTask_OnFloor_Strategy : public AddTaskStrategy {
 public:
   using AddTaskStrategy::AddTaskStrategy;

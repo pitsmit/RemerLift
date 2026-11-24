@@ -36,6 +36,8 @@ class App {
     }
   }
 
+  // выбор стратегии добавления задачи в список задач в зависимости от состояния
+  // лифта и команды
   void process_command(Lift &lift, Command &command) {
     std::vector<std::unique_ptr<AddTaskStrategy>> strategies;
     strategies.reserve(14);
@@ -82,7 +84,8 @@ class App {
     throw NoStrategyException("No suitable strategy found for this command.");
   }
 
-  void wait_for_enter() {
+  // получение команды и дальнейшая обработка
+  void read_command() {
     std::string input;
     std::cout << "\nEnter command: ";
     if (!std::getline(std::cin, input)) {
@@ -100,19 +103,21 @@ class App {
     }
   }
 
-  static void handle_sigint(int) { command_requested = true; }
+  static void handle_sigint(int) { command_requested = true; } // обработчик
 
 public:
   App() : count_floors(input_floor_count()) {}
 
   static std::atomic_bool command_requested;
 
+  // основной цикл работы приложения
   void run() {
     std::signal(SIGINT, handle_sigint);
     while (true) {
       lift.next_step();
-      if (command_requested.exchange(false)) {
-        wait_for_enter();
+      if (command_requested.exchange(
+              false)) { // возвращает текущее значение и сбрасывает в false
+        read_command();
       }
       lift.delay_to_truth();
     }

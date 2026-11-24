@@ -16,11 +16,14 @@ class Lift {
   core::FloorNum current_floor = START_FLOOR;
   Direction direction = Direction::NoTasks;
 
-  std::vector<core::FloorNum> tasks_higher;
-  std::vector<core::FloorNum> tasks_lower;
+  std::vector<core::FloorNum> tasks_higher; // таски на этажи выше текущего
+  std::vector<core::FloorNum> tasks_lower;  // таски на этажи ниже текущего
 
+  // вывод информации о текущем состоянии лифта
   void where_is_cabin() const {
-    static bool no_tasks_flag = false;
+    static bool no_tasks_flag =
+        false; // флаг, чтобы не выводить сообщение о том, что лифт никуда не
+               // едет, если он уже стоял на месте
     if (direction == Direction::NoTasks && no_tasks_flag) {
       return;
     }
@@ -41,12 +44,14 @@ class Lift {
       --current_floor;
     }
     if (current_floor < MIN_FLOOR_VALUE || current_floor > MAX_COUNT_FLOORS) {
-      throw IrreversibleException(
+      throw IrreversibleException( // необратимая ошибка, так как лифт не может
+                                   // выйти за пределы допустимого диапазона
+                                   // этажей
           "Lift cannot go outside the valid floor range.");
     }
   }
 
-  void update_state() noexcept {
+  void update_direction() noexcept {
     if (!tasks_higher.empty() && !tasks_lower.empty()) {
       return;
     }
@@ -59,6 +64,7 @@ class Lift {
     }
   }
 
+  // проверяем что лифт достиг цели и удаляем этаж из списка задач, если достиг
   void reach_goal(std::vector<core::FloorNum> &floors) {
     if (!floors.empty() && current_floor == floors.front()) {
       floors.erase(floors.begin());
@@ -66,6 +72,7 @@ class Lift {
     }
   }
 
+  // хелпер для проверки наличия задачи
   bool has_task(const std::vector<core::FloorNum> &tasks,
                 core::FloorNum floor) const {
     return std::ranges::find(tasks, floor) != tasks.end();
@@ -133,13 +140,14 @@ public:
     } else if (direction == Direction::TargetIsLower) {
       reach_goal(tasks_lower);
     }
-    update_state();
+    update_direction();
   }
 
   bool has_no_tasks_higher_than(const core::FloorNum floor) const noexcept {
     return tasks_higher.empty() || floor > tasks_higher.back();
   }
 
+  // обертка для задержки
   void delay_to_truth() const {
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
