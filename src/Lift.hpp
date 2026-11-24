@@ -13,7 +13,7 @@
 enum class Direction { NoTasks, TargetIsHigher, TargetIsLower = -1 };
 
 class Lift {
-  core::FloorNum current_floor = 1;
+  core::FloorNum current_floor = START_FLOOR;
   Direction direction = Direction::NoTasks;
 
   std::vector<core::FloorNum> tasks_higher;

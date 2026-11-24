@@ -21,6 +21,7 @@ class App {
         if (!(std::cin >> floors)) {
           throw InputException("Invalid input");
         }
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         if (floors < MIN_COUNT_FLOORS || floors > MAX_COUNT_FLOORS) {
           throw InputException(
               std::format("Number of floors must be between {} and {}",
@@ -37,7 +38,7 @@ class App {
 
   void process_command(Lift &lift, Command &command) {
     std::vector<std::unique_ptr<AddTaskStrategy>> strategies;
-    strategies.reserve(15);
+    strategies.reserve(14);
 
     strategies.push_back(
         std::make_unique<LiftHasNoTasks_Higher_Strategy>(lift, command));
@@ -62,13 +63,11 @@ class App {
         std::make_unique<LiftGoesUp_Lower_OnFloor_Strategy>(lift, command));
 
     strategies.push_back(
-        std::make_unique<LiftGoesDown_Current_Cabin_Strategy>(lift, command));
+        std::make_unique<LiftGoesDown_Current_Strategy>(lift, command));
     strategies.push_back(
         std::make_unique<LiftGoesDown_Higher_Cabin_Strategy>(lift, command));
     strategies.push_back(
         std::make_unique<LiftGoesDown_Lower_Cabin_Strategy>(lift, command));
-    strategies.push_back(
-        std::make_unique<LiftGoesDown_Current_OnFloor_Strategy>(lift, command));
     strategies.push_back(
         std::make_unique<LiftGoesDown_Higher_OnFloor_Strategy>(lift, command));
     strategies.push_back(

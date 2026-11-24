@@ -69,7 +69,7 @@ public:
            command.get_floor() == lift.get_current_floor();
   }
 
-  void add_task() override { lift.add_to_tasks_lower(command.get_floor()); }
+  void add_task() override { lift.stopping_message(); }
 };
 
 class LiftGoesUp_Higher_Cabin_Strategy : public AddTaskStrategy {
@@ -141,17 +141,16 @@ public:
   void add_task() override { lift.add_to_tasks_lower(command.get_floor()); }
 };
 
-class LiftGoesDown_Current_Cabin_Strategy : public AddTaskStrategy {
+class LiftGoesDown_Current_Strategy : public AddTaskStrategy {
 public:
   using AddTaskStrategy::AddTaskStrategy;
 
   bool can_add_task() const override {
     return lift.get_state() == Direction::TargetIsLower &&
-           command.get_type() == CommandType::InCabin &&
            command.get_floor() == lift.get_current_floor();
   }
 
-  void add_task() override { lift.add_to_tasks_higher(command.get_floor()); }
+  void add_task() override { lift.stopping_message(); }
 };
 
 class LiftGoesDown_Higher_Cabin_Strategy : public AddTaskStrategy {
@@ -178,21 +177,6 @@ public:
   }
 
   void add_task() override { lift.add_to_tasks_lower(command.get_floor()); }
-};
-
-class LiftGoesDown_Current_OnFloor_Strategy : public AddTaskStrategy {
-public:
-  using AddTaskStrategy::AddTaskStrategy;
-
-  bool can_add_task() const override {
-    return lift.get_state() == Direction::TargetIsLower &&
-           command.get_type() == CommandType::OnFloor &&
-           command.get_floor() == lift.get_current_floor();
-  }
-
-  void add_task() override {
-    lift.push_back_to_tasks_lower(command.get_floor());
-  }
 };
 
 class LiftGoesDown_Higher_OnFloor_Strategy : public AddTaskStrategy {
