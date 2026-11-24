@@ -1,0 +1,56 @@
+\documentclass[border=10pt]{standalone}
+\usepackage{circuitikz}
+
+\begin{document}
+
+\begin{circuitikz}
+
+% Microcontroller
+\draw
+    (0,2.75) node[
+        draw,
+        minimum width=3cm,
+        minimum height=2cm
+    ] (MCU) {Microcontroller\\3.3 V};
+
+% GPIO -> resistor -> transistor
+\draw
+    (MCU.east)
+    -- (2,2.75)
+    to[R, l=$1\,k\Omega$] (5.5,2.75)
+    -- (3,2.75);
+
+% NPN transistor
+\draw
+    (5,2.75)
+    node[npn, anchor=B] (Q1) {};
+
+\node[right] at (Q1) {NPN};
+
+% Relay coil
+\draw
+    (Q1.C)
+    -- (8,3.5)
+    to[L, l={Relay 12 V}] (8,5.5);
+
+% +12 V
+\draw
+    (8,5.5)
+    -- (10,5.5)
+    node[right] {$+12\,V$};
+
+% Flyback diode
+\draw
+    (8,3.5)
+    to[D, l=$D_1$] (10,5.5);
+
+% Ground
+\draw
+    (Q1.E)
+    -- (5.85,1)
+    node[ground] {};
+
+
+\end{circuitikz}
+
+\end{document}
