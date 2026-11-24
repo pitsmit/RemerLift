@@ -3,9 +3,12 @@
 #include <algorithm>
 #include <format>
 #include <iostream>
+#include <thread>
 #include <vector>
 
 #include "Command.hpp"
+#include "Exceptions.hpp"
+#include "constants.hpp"
 #include "types.hpp"
 
 enum class Direction { NoTasks, TargetIsHigher, TargetIsLower = -1 };
@@ -22,31 +25,22 @@ class Lift {
     if (direction == Direction::NoTasks && no_tasks_flag) {
       return;
     }
-    std::cout << std::format("Cabin is on floor {}, and going {}. <Press any "
-                             "key to enter new command>",
+    std::cout << std::format("Cabin is on floor {}, and going {}. <Press "
+                             "ctrl+C to enter new command>",
                              current_floor,
                              direction == Direction::NoTasks ? "nowhere"
                              : direction == Direction::TargetIsHigher ? "up"
                                                                       : "down")
               << std::endl;
-    if (direction == Direction::NoTasks) {
-      no_tasks_flag = true;
-    } else {
-      no_tasks_flag = false;
+    no_tasks_flag = direction == Direction::NoTasks;
+  }
+
+  void update_current_floor() {
+    current_floor += static_cast<core::FloorNum>(direction);
+    if (current_floor < MIN_FLOOR_VALUE || current_floor > MAX_COUNT_FLOORS) {
+      throw IrreversibleException(
+          "Lift cannot go outside the valid floor range.");
     }
-  }
-
-  void stopping_message() const {
-    std::cout << std::format("Cabin stopped on floor {}.", current_floor)
-              << std::endl;
-    std::cout << "Doors are closed." << std::endl;
-    std::cout << "Doors are opening..." << std::endl;
-    std::cout << "Doors are closing..." << std::endl;
-    std::cout << "Doors are closed. Cabin is moving again." << std::endl;
-  }
-
-  void update_current_floor() noexcept {
-    current_floor += static_cast<int>(direction);
   }
 
   void update_state() noexcept {
@@ -62,6 +56,18 @@ class Lift {
     }
   }
 
+  void reach_goal(std::vector<core::FloorNum> &floors) {
+    if (!floors.empty() && current_floor == floors.front()) {
+      floors.erase(floors.begin());
+      stopping_message();
+    }
+  }
+
+  bool has_task(const std::vector<core::FloorNum> &tasks,
+                core::FloorNum floor) const {
+    return std::ranges::find(tasks, floor) != tasks.end();
+  }
+
 public:
   Lift() = default;
   Direction get_state() const noexcept { return direction; }
@@ -74,52 +80,64 @@ public:
   }
 
   void push_back_to_tasks_higher(core::FloorNum floor) {
-    if (std::ranges::find(tasks_higher, floor) == tasks_higher.end()) {
-      tasks_higher.push_back(floor);
-    }
+    if (has_task(tasks_higher, floor))
+      return;
+    tasks_higher.push_back(floor);
   }
 
   void push_back_to_tasks_lower(core::FloorNum floor) {
-    if (std::ranges::find(tasks_lower, floor) == tasks_lower.end()) {
-      tasks_lower.push_back(floor);
-    }
+    if (has_task(tasks_lower, floor))
+      return;
+    tasks_lower.push_back(floor);
   }
 
   void add_to_tasks_higher(core::FloorNum floor) {
-    if (std::ranges::find(tasks_higher, floor) != tasks_higher.end()) {
+    if (has_task(tasks_higher, floor))
       return;
-    }
     auto it = std::lower_bound(tasks_higher.begin(), tasks_higher.end(), floor);
     tasks_higher.insert(it, floor);
   }
 
   void add_to_tasks_lower(core::FloorNum floor) {
-    if (std::ranges::find(tasks_lower, floor) != tasks_lower.end()) {
+    if (has_task(tasks_lower, floor))
       return;
-    }
     auto it = std::lower_bound(tasks_lower.begin(), tasks_lower.end(), floor,
                                std::greater{});
     tasks_lower.insert(it, floor);
+  }
+
+  void stopping_message() const {
+    std::cout << std::format("Cabin stopped on floor {}.", current_floor)
+              << std::endl;
+    delay_to_truth();
+    std::cout << "Doors are closed." << std::endl;
+    delay_to_truth();
+    std::cout << "Doors are opening..." << std::endl;
+    delay_to_truth();
+    std::cout << "Doors are opened." << std::endl;
+    delay_to_truth();
+    std::cout << "Doors are closing..." << std::endl;
+    delay_to_truth();
+    std::cout << "Doors are closed." << std::endl;
+    delay_to_truth();
   }
 
   void next_step() {
     where_is_cabin();
     update_current_floor();
     if (direction == Direction::TargetIsHigher) {
-      if (!tasks_higher.empty() && current_floor == tasks_higher.front()) {
-        tasks_higher.erase(tasks_higher.begin());
-        stopping_message();
-      }
+      reach_goal(tasks_higher);
     } else if (direction == Direction::TargetIsLower) {
-      if (!tasks_lower.empty() && current_floor == tasks_lower.front()) {
-        tasks_lower.erase(tasks_lower.begin());
-        stopping_message();
-      }
+      reach_goal(tasks_lower);
     }
     update_state();
   }
 
   bool has_no_tasks_higher_than(const Command &cmd) const noexcept {
-    return cmd.floor > tasks_higher.back();
+    return cmd.get_floor() > tasks_higher.back();
+  }
+
+  void delay_to_truth() const {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 };

@@ -1,5 +1,6 @@
+#include <atomic>
+#include <csignal>
 #include <iostream>
-#include <thread>
 
 #include "AddTaskStrategy.hpp"
 #include "Command.hpp"
@@ -34,27 +35,8 @@ class App {
     }
   }
 
-  Command parse_command(const std::string &input) {
-    if (input.size() < 2 || (input[0] != 'F' && input[0] != 'C')) {
-      throw InputException("Invalid command");
-    }
-    const auto floor_str = input.substr(1);
-    if (floor_str.empty() ||
-        !std::all_of(floor_str.begin(), floor_str.end(),
-                     [](unsigned char c) { return std::isdigit(c); })) {
-      throw InputException("Invalid floor");
-    }
-    const int floor = std::stoi(floor_str);
-    if (floor < 1 || floor > count_floors) {
-      throw InputException("Floor is out of range");
-    }
-    return {.type = static_cast<CommandType>(input[0]),
-            .floor = static_cast<core::FloorNum>(floor)};
-  }
-
   void process_command(Lift &lift, Command &command) {
     std::vector<std::unique_ptr<AddTaskStrategy>> strategies;
-
     strategies.reserve(15);
 
     strategies.push_back(
@@ -98,37 +80,47 @@ class App {
         return;
       }
     }
-
     throw NoStrategyException("No suitable strategy found for this command.");
   }
 
   void wait_for_enter() {
     std::string input;
-    while (std::getline(std::cin, input)) {
-      std::cout << "Enter command: ";
-      if (!std::getline(std::cin, input)) {
-        break;
-      }
-      try {
-        auto command = parse_command(input);
+    std::cout << "\nEnter command: ";
+    if (!std::getline(std::cin, input)) {
+      return;
+    }
+    try {
+      auto command = Command(input);
+      if (command.has_valid_floor(count_floors)) {
         process_command(lift, command);
-      } catch (const InputException &e) {
-        std::cout << e.what() << '\n';
+      } else {
+        throw InputException("Floor is out of range");
       }
+    } catch (const InputException &e) {
+      std::cout << e.what() << '\n';
     }
   }
+
+  static void handle_sigint(int) { command_requested = true; }
 
 public:
   App() : count_floors(input_floor_count()) {}
-  void run() {
-    std::jthread input_thread([this] { wait_for_enter(); });
 
+  static std::atomic_bool command_requested;
+
+  void run() {
+    std::signal(SIGINT, handle_sigint);
     while (true) {
       lift.next_step();
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+      if (command_requested.exchange(false)) {
+        wait_for_enter();
+      }
+      lift.delay_to_truth();
     }
   }
 };
+
+std::atomic_bool App::command_requested = false;
 
 int main() {
   App().run();

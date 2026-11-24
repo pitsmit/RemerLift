@@ -35,3 +35,11 @@ public:
   explicit NoStrategyException(std::string_view msg) noexcept
       : BaseException(msg) {}
 };
+
+class IrreversibleException : public BaseException {
+public:
+  IrreversibleException() noexcept : BaseException("IrreversibleException") {}
+
+  explicit IrreversibleException(std::string_view msg) noexcept
+      : BaseException(msg) {}
+};
