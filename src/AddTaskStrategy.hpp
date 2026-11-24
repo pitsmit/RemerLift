@@ -106,7 +106,7 @@ public:
     return lift.get_state() == Direction::TargetIsHigher &&
            command.get_type() == CommandType::OnFloor &&
            command.get_floor() > lift.get_current_floor() &&
-           lift.has_no_tasks_higher_than(command);
+           lift.has_no_tasks_higher_than(command.get_floor());
   }
 
   void add_task() override {
@@ -122,7 +122,7 @@ public:
     return lift.get_state() == Direction::TargetIsHigher &&
            command.get_type() == CommandType::OnFloor &&
            command.get_floor() > lift.get_current_floor() &&
-           !lift.has_no_tasks_higher_than(command);
+           !lift.has_no_tasks_higher_than(command.get_floor());
   }
 
   void add_task() override { lift.add_to_tasks_lower(command.get_floor()); }

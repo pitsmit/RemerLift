@@ -6,7 +6,6 @@
 #include <thread>
 #include <vector>
 
-#include "Command.hpp"
 #include "Exceptions.hpp"
 #include "constants.hpp"
 #include "types.hpp"
@@ -36,7 +35,11 @@ class Lift {
   }
 
   void update_current_floor() {
-    current_floor += static_cast<core::FloorNum>(direction);
+    if (direction == Direction::TargetIsHigher) {
+      ++current_floor;
+    } else if (direction == Direction::TargetIsLower) {
+      --current_floor;
+    }
     if (current_floor < MIN_FLOOR_VALUE || current_floor > MAX_COUNT_FLOORS) {
       throw IrreversibleException(
           "Lift cannot go outside the valid floor range.");
@@ -133,8 +136,8 @@ public:
     update_state();
   }
 
-  bool has_no_tasks_higher_than(const Command &cmd) const noexcept {
-    return cmd.get_floor() > tasks_higher.back();
+  bool has_no_tasks_higher_than(const core::FloorNum floor) const noexcept {
+    return tasks_higher.empty() || floor > tasks_higher.back();
   }
 
   void delay_to_truth() const {
