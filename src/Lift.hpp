@@ -157,7 +157,7 @@ public:
   }
 
   bool has_no_tasks_higher_than(const core::FloorNum floor) const noexcept {
-    return tasks_higher.empty() || floor > tasks_higher.back();
+    return tasks_higher.empty() || floor >= tasks_higher.back();
   }
 
   // обертка для задержки
