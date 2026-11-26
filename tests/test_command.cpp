@@ -13,7 +13,7 @@ TEST(CommandTest, CreatesFloorCommand) {
   const Command command(input);
 
   // ASSERT
-  EXPECT_EQ(command.get_type(), CommandType::OnFloor);
+  EXPECT_TRUE(command.from_floor());
   EXPECT_EQ(command.get_floor(), 5);
 }
 
@@ -25,7 +25,7 @@ TEST(CommandTest, CreatesCabinCommand) {
   const Command command(input);
 
   // ASSERT
-  EXPECT_EQ(command.get_type(), CommandType::InCabin);
+  EXPECT_TRUE(command.from_cabin());
   EXPECT_EQ(command.get_floor(), 7);
 }
 

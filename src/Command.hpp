@@ -43,8 +43,10 @@ public:
     type = static_cast<CommandType>(input[0]);
     floor = static_cast<core::FloorNum>(parsed_floor);
   }
-  CommandType get_type() const noexcept { return type; }
   core::FloorNum get_floor() const noexcept { return floor; }
+
+  bool from_cabin() const noexcept { return type == CommandType::InCabin; }
+  bool from_floor() const noexcept { return type == CommandType::OnFloor; }
 
   bool has_valid_floor(const core::FloorNum count_floors) const noexcept {
     return floor <= count_floors;

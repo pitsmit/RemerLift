@@ -88,11 +88,16 @@ class Lift {
 
 public:
   Lift() = default;
-  Direction get_state() const noexcept { return direction; }
-  void set_state(Direction new_direction) noexcept {
-    direction = new_direction;
-  }
+  void send_up() noexcept { direction = Direction::TargetIsHigher; }
+  void send_down() noexcept { direction = Direction::TargetIsLower; }
   core::FloorNum get_current_floor() const noexcept { return current_floor; }
+  bool goes_down() const noexcept {
+    return direction == Direction::TargetIsLower;
+  }
+  bool goes_up() const noexcept {
+    return direction == Direction::TargetIsHigher;
+  }
+  bool stay() const noexcept { return direction == Direction::NoTasks; }
 
   void mute() noexcept { is_muted = true; }
   void unmute() noexcept { is_muted = false; }
