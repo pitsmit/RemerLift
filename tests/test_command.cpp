@@ -172,17 +172,6 @@ TEST(CommandTest, RejectsFloorAboveMaximum) {
   EXPECT_FALSE(result);
 }
 
-TEST(CommandTest, RejectsFloorBelowMinimum) {
-  // ARRANGE
-  const Command command("F0");
-
-  // ACT
-  const bool result = command.has_valid_floor(10);
-
-  // ASSERT
-  EXPECT_FALSE(result);
-}
-
 TEST(CommandTest, AcceptsCabinCommandWithinRange) {
   // ARRANGE
   const Command command("C5");
@@ -221,5 +210,97 @@ TEST(CommandTest, ThrowsOnIntegerOverflow) {
   const std::string input = "F999999999999999999999999999";
 
   // ACT && ASSERT
-  EXPECT_THROW(Command{input}, std::out_of_range);
+  EXPECT_THROW(Command{input}, InputException);
+}
+
+TEST(CommandTest, ThrowsOnFloorBelowMinimum) {
+  // ARRANGE
+  const std::string input = "F0";
+
+  // ACT && ASSERT
+  EXPECT_THROW(Command{input}, InputException);
+}
+
+TEST(CommandTest, ThrowsOnFloorAboveMaximumCount) {
+  // ARRANGE
+  const auto input = "F" + std::to_string(MAX_COUNT_FLOORS + 1);
+
+  // ACT && ASSERT
+  EXPECT_THROW(Command{input}, InputException);
+}
+
+TEST(CommandTest, AcceptsMaximumAllowedFloor) {
+  // ARRANGE
+  const auto input = "F" + std::to_string(MAX_COUNT_FLOORS);
+
+  // ACT
+  const Command command(input);
+
+  // ASSERT
+  EXPECT_EQ(command.get_floor(), MAX_COUNT_FLOORS);
+}
+
+TEST(CommandTest, ThrowsOnDecimalFloor) {
+  // ARRANGE
+  const std::string input = "F5.5";
+
+  // ACT && ASSERT
+  EXPECT_THROW(Command{input}, InputException);
+}
+
+TEST(CommandTest, ThrowsOnTabInFloor) {
+  // ARRANGE
+  const std::string input = "F\t5";
+
+  // ACT && ASSERT
+  EXPECT_THROW(Command{input}, InputException);
+}
+
+TEST(CommandTest, ThrowsOnMultiplePrefixes) {
+  // ARRANGE
+  const std::string input = "FF5";
+
+  // ACT && ASSERT
+  EXPECT_THROW(Command{input}, InputException);
+}
+
+TEST(CommandTest, ThrowsOnNewlineAfterFloor) {
+  // ARRANGE
+  const std::string input = "F5\n";
+
+  // ACT && ASSERT
+  EXPECT_THROW(Command{input}, InputException);
+}
+
+TEST(CommandTest, RejectsFloorWhenCountIsZero) {
+  // ARRANGE
+  const Command command("F1");
+
+  // ACT
+  const bool result = command.has_valid_floor(0);
+
+  // ASSERT
+  EXPECT_FALSE(result);
+}
+
+TEST(CommandTest, AcceptsFloorEqualToCount) {
+  // ARRANGE
+  const Command command("F5");
+
+  // ACT
+  const bool result = command.has_valid_floor(5);
+
+  // ASSERT
+  EXPECT_TRUE(result);
+}
+
+TEST(CommandTest, RejectsFloorGreaterThanCountByOne) {
+  // ARRANGE
+  const Command command("F6");
+
+  // ACT
+  const bool result = command.has_valid_floor(5);
+
+  // ASSERT
+  EXPECT_FALSE(result);
 }
