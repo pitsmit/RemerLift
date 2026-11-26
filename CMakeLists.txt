@@ -16,6 +16,7 @@ find_package(GTest REQUIRED)
 
 add_executable(LiftTests
     tests/test_command.cpp
+    tests/test_input_floor_count.cpp
 )
 
 target_include_directories(LiftTests PRIVATE

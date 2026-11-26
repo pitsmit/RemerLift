@@ -6,38 +6,14 @@
 #include "AddTaskStrategy.hpp"
 #include "Command.hpp"
 #include "Exceptions.hpp"
+#include "Input.hpp"
 #include "Lift.hpp"
-#include "constants.hpp"
 #include "types.hpp"
 
 class App {
   core::FloorNum count_floors = 0;
   static Lift lift;
-
-  pollfd stdin_fd;
-
-  core::FloorNum input_floor_count() {
-    while (true) {
-      try {
-        int floors{};
-        std::cout << "Enter number of floors: ";
-        if (!(std::cin >> floors)) {
-          throw InputException("Invalid input");
-        }
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        if (floors < MIN_COUNT_FLOORS || floors > MAX_COUNT_FLOORS) {
-          throw InputException(
-              std::format("Number of floors must be between {} and {}",
-                          MIN_COUNT_FLOORS, MAX_COUNT_FLOORS));
-        }
-        return static_cast<core::FloorNum>(floors);
-      } catch (const InputException &e) {
-        std::cout << e.what() << '\n';
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      }
-    }
-  }
+  pollfd stdin_fd{.fd = STDIN_FILENO, .events = POLLIN, .revents = 0};
 
   // выбор стратегии добавления задачи в список задач в зависимости от состояния
   // лифта и команды
@@ -109,9 +85,8 @@ class App {
   static void handle_sigint(int) { lift.mute(); }
 
 public:
-  App() : count_floors(input_floor_count()) {
+  App() : count_floors(Input::floor_count()) {
     std::signal(SIGINT, handle_sigint);
-    stdin_fd = {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0};
   }
 
   // основной цикл работы приложения
