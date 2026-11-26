@@ -1,6 +1,7 @@
-#include <atomic>
 #include <csignal>
 #include <iostream>
+#include <poll.h>
+#include <unistd.h>
 
 #include "AddTaskStrategy.hpp"
 #include "Command.hpp"
@@ -11,7 +12,9 @@
 
 class App {
   core::FloorNum count_floors = 0;
-  Lift lift;
+  static Lift lift;
+
+  pollfd stdin_fd;
 
   core::FloorNum input_floor_count() {
     while (true) {
@@ -87,7 +90,6 @@ class App {
   // получение команды и дальнейшая обработка
   void read_command() {
     std::string input;
-    std::cout << "\nEnter command: ";
     if (!std::getline(std::cin, input)) {
       return;
     }
@@ -101,30 +103,29 @@ class App {
     } catch (const InputException &e) {
       std::cout << e.what() << '\n';
     }
+    lift.unmute();
   }
 
-  static void handle_sigint(int) { command_requested = true; } // обработчик
+  static void handle_sigint(int) { lift.mute(); }
 
 public:
-  App() : count_floors(input_floor_count()) {}
-
-  static std::atomic_bool command_requested;
+  App() : count_floors(input_floor_count()) {
+    std::signal(SIGINT, handle_sigint);
+    stdin_fd = {.fd = STDIN_FILENO, .events = POLLIN, .revents = 0};
+  }
 
   // основной цикл работы приложения
   void run() {
-    std::signal(SIGINT, handle_sigint);
     while (true) {
-      lift.next_step();
-      if (command_requested.exchange(
-              false)) { // возвращает текущее значение и сбрасывает в false
+      if (poll(&stdin_fd, 1, 1000) > 0 && (stdin_fd.revents & POLLIN)) {
         read_command();
       }
-      lift.delay_to_truth();
+      lift.next_step();
     }
   }
 };
 
-std::atomic_bool App::command_requested = false;
+Lift App::lift{};
 
 int main() {
   App().run();

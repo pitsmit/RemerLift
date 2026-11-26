@@ -19,8 +19,14 @@ class Lift {
   std::vector<core::FloorNum> tasks_higher; // таски на этажи выше текущего
   std::vector<core::FloorNum> tasks_lower;  // таски на этажи ниже текущего
 
+  bool is_muted = false; // если установлен, то лифт не будет выводить
+                         // информацию о текущем состоянии
+
   // вывод информации о текущем состоянии лифта
   void where_is_cabin() const {
+    if (is_muted) {
+      return;
+    }
     static bool no_tasks_flag =
         false; // флаг, чтобы не выводить сообщение о том, что лифт никуда не
                // едет, если он уже стоял на месте
@@ -88,6 +94,9 @@ public:
   void set_current_floor(core::FloorNum floor) noexcept {
     current_floor = floor;
   }
+
+  void mute() noexcept { is_muted = true; }
+  void unmute() noexcept { is_muted = false; }
 
   void push_back_to_tasks_higher(core::FloorNum floor) {
     if (has_task(tasks_higher, floor))
