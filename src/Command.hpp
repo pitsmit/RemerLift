@@ -33,10 +33,10 @@ public:
     type = static_cast<CommandType>(input[0]);
     floor = static_cast<core::FloorNum>(std::stoi(floor_str));
   }
-  CommandType get_type() const { return type; }
-  core::FloorNum get_floor() const { return floor; }
+  CommandType get_type() const noexcept { return type; }
+  core::FloorNum get_floor() const noexcept { return floor; }
 
-  bool has_valid_floor(const core::FloorNum count_floors) const {
+  bool has_valid_floor(const core::FloorNum count_floors) const noexcept {
     return floor >= MIN_FLOOR_VALUE && floor <= count_floors;
   }
 };
