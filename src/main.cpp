@@ -13,11 +13,10 @@
 class App {
   core::FloorNum count_floors = 0;
   static Lift lift;
-  pollfd stdin_fd{.fd = STDIN_FILENO, .events = POLLIN, .revents = 0};
 
   // выбор стратегии добавления задачи в список задач в зависимости от состояния
   // лифта и команды
-  void process_command(Lift &lift, Command &command) {
+  void process(Command &command) {
     std::vector<std::unique_ptr<AddTaskStrategy>> strategies;
     strategies.reserve(14);
 
@@ -72,7 +71,7 @@ class App {
     try {
       auto command = Command(input);
       if (command.has_valid_floor(count_floors)) {
-        process_command(lift, command);
+        process(command);
       } else {
         throw InputException("Floor is out of range");
       }
@@ -84,6 +83,11 @@ class App {
 
   static void handle_sigint(int) { lift.mute(); }
 
+  static pollfd stdin_fd;
+  static bool something_was_commanded() {
+    return poll(&stdin_fd, 1, 1000) > 0 && (stdin_fd.revents & POLLIN);
+  }
+
 public:
   App() : count_floors(Input::floor_count()) {
     std::signal(SIGINT, handle_sigint);
@@ -92,7 +96,7 @@ public:
   // основной цикл работы приложения
   void run() {
     while (true) {
-      if (poll(&stdin_fd, 1, 1000) > 0 && (stdin_fd.revents & POLLIN)) {
+      if (something_was_commanded()) {
         read_command();
       }
       lift.next_step();
@@ -101,6 +105,7 @@ public:
 };
 
 Lift App::lift{};
+pollfd App::stdin_fd{.fd = STDIN_FILENO, .events = POLLIN, .revents = 0};
 
 int main() {
   App().run();

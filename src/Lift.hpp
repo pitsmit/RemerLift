@@ -93,9 +93,6 @@ public:
     direction = new_direction;
   }
   core::FloorNum get_current_floor() const noexcept { return current_floor; }
-  void set_current_floor(core::FloorNum floor) noexcept {
-    current_floor = floor;
-  }
 
   void mute() noexcept { is_muted = true; }
   void unmute() noexcept { is_muted = false; }
