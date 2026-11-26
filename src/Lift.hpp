@@ -33,13 +33,15 @@ class Lift {
     if (direction == Direction::NoTasks && no_tasks_flag) {
       return;
     }
-    std::cout << std::format("Cabin is on floor {}, and going {}. <Press "
-                             "ctrl+C to enter new command>",
-                             current_floor,
-                             direction == Direction::NoTasks ? "nowhere"
-                             : direction == Direction::TargetIsHigher ? "up"
-                                                                      : "down")
-              << std::endl;
+    std::cout
+        << std::format(
+               "Cabin is on floor {}, and going {}. <Press "
+               "ctrl+C to mute lift, then write new commmand and press enter>",
+               current_floor,
+               direction == Direction::NoTasks          ? "nowhere"
+               : direction == Direction::TargetIsHigher ? "up"
+                                                        : "down")
+        << std::endl;
     no_tasks_flag = direction == Direction::NoTasks;
   }
 
