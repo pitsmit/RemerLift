@@ -75,10 +75,15 @@ class Lift {
   }
 
   // проверяем что лифт достиг цели и удаляем этаж из списка задач, если достиг
-  void reach_goal(std::vector<core::FloorNum> &floors) {
-    if (!floors.empty() && current_floor == floors.front()) {
-      floors.erase(floors.begin());
+  void reach_goal() {
+    if (stay()) {
+      return;
+    }
+    auto &tasks = goes_up() ? tasks_higher : tasks_lower;
+    if (!tasks.empty() && current_floor == tasks.front()) {
       stopping_message();
+      std::erase(tasks_higher, current_floor);
+      std::erase(tasks_lower, current_floor);
     }
   }
 
@@ -153,11 +158,7 @@ public:
   void next_step() {
     where_is_cabin();
     update_current_floor();
-    if (goes_up()) {
-      reach_goal(tasks_higher);
-    } else if (goes_down()) {
-      reach_goal(tasks_lower);
-    }
+    reach_goal();
     update_direction();
   }
 
