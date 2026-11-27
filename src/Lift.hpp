@@ -10,7 +10,7 @@
 #include "constants.hpp"
 #include "types.hpp"
 
-enum class Direction { NoTasks, TargetIsHigher, TargetIsLower = -1 };
+enum class Direction { NoTasks, TargetIsHigher, TargetIsLower };
 
 class Lift {
   core::FloorNum current_floor = START_FLOOR;
@@ -22,6 +22,8 @@ class Lift {
   bool is_muted = false; // если установлен, то лифт не будет выводить
                          // информацию о текущем состоянии
 
+  std::chrono::milliseconds delay_duration{1000};
+
   // вывод информации о текущем состоянии лифта
   void where_is_cabin() const {
     if (is_muted) {
@@ -30,7 +32,7 @@ class Lift {
     static bool no_tasks_flag =
         false; // флаг, чтобы не выводить сообщение о том, что лифт никуда не
                // едет, если он уже стоял на месте
-    if (direction == Direction::NoTasks && no_tasks_flag) {
+    if (stay() && no_tasks_flag) {
       return;
     }
     std::cout
@@ -38,17 +40,17 @@ class Lift {
                "Cabin is on floor {}, and going {}. <Press "
                "ctrl+C to mute lift, then write new commmand and press enter>",
                current_floor,
-               direction == Direction::NoTasks          ? "nowhere"
-               : direction == Direction::TargetIsHigher ? "up"
-                                                        : "down")
+               stay()      ? "nowhere"
+               : goes_up() ? "up"
+                           : "down")
         << std::endl;
-    no_tasks_flag = direction == Direction::NoTasks;
+    no_tasks_flag = stay();
   }
 
   void update_current_floor() {
-    if (direction == Direction::TargetIsHigher) {
+    if (goes_up()) {
       ++current_floor;
-    } else if (direction == Direction::TargetIsLower) {
+    } else if (goes_down()) {
       --current_floor;
     }
     if (current_floor < MIN_FLOOR_VALUE || current_floor > MAX_COUNT_FLOORS) {
@@ -64,11 +66,11 @@ class Lift {
       return;
     }
     if (tasks_higher.empty() && tasks_lower.empty()) {
-      direction = Direction::NoTasks;
+      stop();
     } else if (!tasks_higher.empty()) {
-      direction = Direction::TargetIsHigher;
+      send_up();
     } else if (!tasks_lower.empty()) {
-      direction = Direction::TargetIsLower;
+      send_down();
     }
   }
 
@@ -90,6 +92,7 @@ public:
   Lift() = default;
   void send_up() noexcept { direction = Direction::TargetIsHigher; }
   void send_down() noexcept { direction = Direction::TargetIsLower; }
+  void stop() noexcept { direction = Direction::NoTasks; }
   core::FloorNum get_current_floor() const noexcept { return current_floor; }
   bool goes_down() const noexcept {
     return direction == Direction::TargetIsLower;
@@ -98,6 +101,8 @@ public:
     return direction == Direction::TargetIsHigher;
   }
   bool stay() const noexcept { return direction == Direction::NoTasks; }
+  size_t count_tasks_higher() const noexcept { return tasks_higher.size(); }
+  size_t count_tasks_lower() const noexcept { return tasks_lower.size(); }
 
   void mute() noexcept { is_muted = true; }
   void unmute() noexcept { is_muted = false; }
@@ -148,9 +153,9 @@ public:
   void next_step() {
     where_is_cabin();
     update_current_floor();
-    if (direction == Direction::TargetIsHigher) {
+    if (goes_up()) {
       reach_goal(tasks_higher);
-    } else if (direction == Direction::TargetIsLower) {
+    } else if (goes_down()) {
       reach_goal(tasks_lower);
     }
     update_direction();
@@ -161,7 +166,9 @@ public:
   }
 
   // обертка для задержки
-  void delay_to_truth() const {
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+  void delay_to_truth() const { std::this_thread::sleep_for(delay_duration); }
+
+  void set_delay_duration(std::chrono::milliseconds duration) noexcept {
+    delay_duration = duration;
   }
 };
